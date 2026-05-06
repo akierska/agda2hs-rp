@@ -131,6 +131,7 @@ compile genv tlm _ def =
         (NewTypePragma ds    , Datatype{}) -> compileData True ds def
         (DefaultPragma ds    , Datatype{}) -> compileData False ds def
         (DerivePragma s      , _         ) | isInstance -> pure <$> compileInstance (ToDerivation s) def
+        (PropertyPragma      , Axiom{})    -> compileProp def
         (PropertyPragma      , Function{}) -> compileProp def
         (DefaultPragma _     , Axiom{}   ) | isInstance -> pure <$> compileInstance (ToDerivation Nothing) def
         (DefaultPragma _     , _         ) | isInstance -> pure <$> compileInstance ToDefinition def

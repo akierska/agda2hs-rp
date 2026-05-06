@@ -33,6 +33,7 @@ import Agda2Hs.Compile.Postulate ( compilePostulate )
 import Agda2Hs.Compile.Record ( compileRecord, checkUnboxPragma )
 import Agda2Hs.Compile.Types
 import Agda2Hs.Compile.Utils
+import Agda2Hs.Compile.Property
 import Agda2Hs.Config
 import Agda2Hs.Pragma
 
@@ -130,6 +131,7 @@ compile genv tlm _ def =
         (NewTypePragma ds    , Datatype{}) -> compileData True ds def
         (DefaultPragma ds    , Datatype{}) -> compileData False ds def
         (DerivePragma s      , _         ) | isInstance -> pure <$> compileInstance (ToDerivation s) def
+        (PropertyPragma      , Function{}) -> compileProp def
         (DefaultPragma _     , Axiom{}   ) | isInstance -> pure <$> compileInstance (ToDerivation Nothing) def
         (DefaultPragma _     , _         ) | isInstance -> pure <$> compileInstance ToDefinition def
         (DefaultPragma _     , Axiom{}   ) -> compilePostulate def

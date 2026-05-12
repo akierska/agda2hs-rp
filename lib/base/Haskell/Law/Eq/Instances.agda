@@ -13,7 +13,7 @@ open import Haskell.Prim.Ord    using ( Ordering; LT; GT; EQ )
 open import Haskell.Prim.Tuple
 open import Haskell.Prim.Word   using ( Word )
 
-open import Haskell.Extra.Dec   using ( mapReflects )
+open import Haskell.Extra.Dec.Def   using ( mapReflects )
 
 open import Haskell.Law.Eq.Def
 open import Haskell.Law.Equality

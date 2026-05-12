@@ -1,4 +1,4 @@
-module Haskell.Extra.Dec where
+module Haskell.Extra.Dec.Def where
 
 open import Haskell.Prelude
 open import Haskell.Extra.Refinement

@@ -28,12 +28,15 @@ import Agda2Hs.Compile.Type (compileType)
 import Agda2Hs.Language.Haskell.Utils ( hsName )
 import Agda2Hs.Language.Haskell ( pp, hsError )
 
+decPath :: String
+decPath = "Haskell.Extra.Dec.Def.Dec"
+
 compileProp :: Definition -> C [Hs.Decl ()]
 compileProp def@Defn{..} = do
     let name = propName $ qnameName defName
     let (tel, concl) = splitTelescope defType
 
-    liftTCM importDec
+    importDec
     decConcl <- wrapDec concl
     typeSig <- compileTypeSig name tel decConcl
     -- body <- compileBody name tel decConcl
@@ -42,12 +45,12 @@ compileProp def@Defn{..} = do
     return [typeSig, Hs.FunBind () [Hs.Match () name [] (Hs.UnGuardedRhs () body) Nothing] ]
 
 
--- Splits a type into (parameter telescope, conclusion type).
-splitTelescope :: Type -> (Telescope, Type)
-splitTelescope ty = let TelV tel concl = telView' ty in (tel, concl)
-
 propName :: Name -> Hs.Name ()
 propName name = hsName $ "prop_" ++ prettyShow name
+
+-- Splits a type into its parameter bindings and conclusion.
+splitTelescope :: Type -> (Telescope, Type)
+splitTelescope ty = let TelV tel concl = telView' ty in (tel, concl)
 
 compileTypeSig :: Hs.Name () -> Telescope -> Type -> C (Hs.Decl ())
 compileTypeSig name tel concl = do
@@ -55,29 +58,29 @@ compileTypeSig name tel concl = do
     return $ Hs.TypeSig () [name] ty
 
 compileBody :: Hs.Name () -> Telescope -> Type -> C (Hs.Decl ())
-compileBody = do
-    -- 1. build pattern match part
-    undefined
+compileBody = undefined
 
--- Imports Haskell.Extra.Dec.{Def,Instances} into scope.
--- based on Agda.Syntax.Translation.ConcreteToAbstract.importPrimitives
-importDec :: TCM ()
+-- Imports Haskell.Extra.Dec.{Def,Instances} into scope
+importDec :: C ()
 importDec = do
-  let haskellExtra = AN.Qual (AC.simpleName "Haskell") . AN.Qual (AC.simpleName "Extra") . AN.Qual (AC.simpleName "Dec")
-      directives = ImportDirective noRange UseEverything [] [] Nothing
-      importDecl q = [AC.Import noRange (haskellExtra q) Nothing AC.DontOpen directives]
-      run ds = case fst $ runNice (NiceEnv True AC.NoWhere_) $ niceDeclarations empty $ importDecl ds of
-        Left _ -> __IMPOSSIBLE__
-        Right ds -> toAbstract ds
-  run $ AC.QName $ AC.simpleName "Def"
-  run $ AC.QName $ AC.simpleName "Instances"
-  return ()
+    let haskellExtra = AN.Qual (AC.simpleName "Haskell") . AN.Qual (AC.simpleName "Extra") . AN.Qual (AC.simpleName "Dec")
+        directives  = ImportDirective noRange UseEverything [] [] Nothing
+        importDecl q = [AC.Import noRange (haskellExtra q) Nothing AC.DontOpen directives]
+        run ds = case fst $ runNice (NiceEnv True AC.NoWhere_) $ niceDeclarations empty $ importDecl ds of
+                   Left _    -> __IMPOSSIBLE__
+                   Right ds' -> liftTCM $ toAbstract ds'
+    run $ AC.QName $ AC.simpleName "Def"
+    run $ AC.QName $ AC.simpleName "Instances"
 
--- Wraps type t with Dec (t -> Dec t)
+    -- Programmatically imported modules don't get properly resolved by agda2hs (inline pragma is not processed)
+    -- That's why we need to mark it as inline explicitly below
+    decName <- resolveStringName decPath
+    addInlineSymbols [decName]
+
+-- Wraps a proposition type P into Dec P.
 wrapDec :: Type -> C Type
 wrapDec t = do
-  dec <- resolveStringName "Haskell.Extra.Dec.Def.Dec"
-  addInlineSymbols [dec]
+  dec <- resolveStringName decPath
   level <- liftTCM newLevelMeta
   let vArg = defaultArg
       hArg = setHiding Hidden . vArg

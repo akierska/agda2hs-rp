@@ -58,6 +58,7 @@ data ParsedPragma
   | TuplePragma Hs.Boxed
   | CompileToPragma String
   | DerivePragma (Maybe (Hs.DerivStrategy ()))
+  | PropertyPragma 
   deriving (Eq, Show)
 
 derivePragma :: String
@@ -101,4 +102,5 @@ processPragma qn = liftTCM (getUniqueCompilerPragma pragmaName qn) >>= \case
     | derivePragma `isPrefixOf` s -> return $ DerivePragma (parseStrategy (drop (length derivePragma + 1) s))
     | "deriving"   `isPrefixOf` s -> processDeriving r s DefaultPragma
     | (newtypePragma ++ " deriving") `isPrefixOf` s -> processDeriving r (drop (length newtypePragma + 1) s) NewTypePragma
+    | s == "property"             -> return PropertyPragma
   _ -> return $ DefaultPragma []

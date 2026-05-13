@@ -24,25 +24,26 @@ import Agda2Hs.Compile.Types
 import Agda2Hs.Compile.Utils
 import Agda2Hs.Language.Haskell (hsName)
 import qualified Agda2Hs.Language.Haskell as Hs
+import Agda.Syntax.Common.Pretty
 
 compileProp :: Definition -> C [Hs.Decl ()]
 compileProp def@Defn{..} = do
-    let name = propName def
+    let name = propName $ qnameName defName
 
     liftTCM importDec
-    (tel, concl) <- splitType defType
-    decConcl <- wrapDec concl 
-    typeSig <- compileTypeSig name tel decConcl 
+    (tel, concl) <- splitTelescope defType
+    decConcl <- wrapDec concl
+    typeSig <- compileTypeSig name tel decConcl
     body <- compileBody name tel decConcl
-    
+
     return [typeSig, body]
 
 -- Splits a type into (parameter telescope, conclusion type).
-splitType :: Type -> C (Telescope, Type)
-splitType = undefined
+splitTelescope :: Type -> C (Telescope, Type)
+splitTelescope = undefined
 
-propName :: Definition -> String
-propName = undefined
+propName :: Name -> String
+propName name = "prop_" ++ prettyShow name
 
 compileTypeSig :: String -> Telescope -> Type -> C (Hs.Decl ())
 compileTypeSig = undefined

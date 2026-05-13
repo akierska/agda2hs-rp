@@ -72,8 +72,7 @@ importDec = do
     run $ AC.QName $ AC.simpleName "Def"
     run $ AC.QName $ AC.simpleName "Instances"
 
-    -- Programmatically imported modules don't get properly resolved by agda2hs (inline pragma is not processed)
-    -- That's why we need to mark it as inline explicitly below
+    -- Programmatic imports bypass pragma processing, so inline symbols must be registered manually.
     decName <- resolveStringName decPath
     addInlineSymbols [decName]
 

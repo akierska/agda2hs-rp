@@ -22,34 +22,42 @@ import qualified Agda.Syntax.Concrete.Name as AN
 import Agda2Hs.AgdaUtils (resolveStringName)
 import Agda2Hs.Compile.Types
 import Agda2Hs.Compile.Utils
-import Agda2Hs.Language.Haskell (hsName)
 import qualified Agda2Hs.Language.Haskell as Hs
 import Agda.Syntax.Common.Pretty
+import Agda2Hs.Compile.Type (compileType)
+import Agda2Hs.Language.Haskell.Utils ( hsName )
+import Agda2Hs.Language.Haskell ( pp, hsError )
 
 compileProp :: Definition -> C [Hs.Decl ()]
 compileProp def@Defn{..} = do
     let name = propName $ qnameName defName
+    let (tel, concl) = splitTelescope defType
 
     liftTCM importDec
-    (tel, concl) <- splitTelescope defType
     decConcl <- wrapDec concl
     typeSig <- compileTypeSig name tel decConcl
-    body <- compileBody name tel decConcl
+    -- body <- compileBody name tel decConcl
 
-    return [typeSig, body]
+    let body = hsError $ "postulate: " ++ pp typeSig
+    return [typeSig, Hs.FunBind () [Hs.Match () name [] (Hs.UnGuardedRhs () body) Nothing] ]
+
 
 -- Splits a type into (parameter telescope, conclusion type).
-splitTelescope :: Type -> C (Telescope, Type)
-splitTelescope = undefined
+splitTelescope :: Type -> (Telescope, Type)
+splitTelescope ty = let TelV tel concl = telView' ty in (tel, concl)
 
-propName :: Name -> String
-propName name = "prop_" ++ prettyShow name
+propName :: Name -> Hs.Name ()
+propName name = hsName $ "prop_" ++ prettyShow name
 
-compileTypeSig :: String -> Telescope -> Type -> C (Hs.Decl ())
-compileTypeSig = undefined
+compileTypeSig :: Hs.Name () -> Telescope -> Type -> C (Hs.Decl ())
+compileTypeSig name tel concl = do
+    ty <- compileType $ unEl $ telePi tel concl
+    return $ Hs.TypeSig () [name] ty
 
-compileBody :: String -> Telescope -> Type -> C (Hs.Decl ())
-compileBody = undefined
+compileBody :: Hs.Name () -> Telescope -> Type -> C (Hs.Decl ())
+compileBody = do
+    -- 1. build pattern match part
+    undefined
 
 -- Imports Haskell.Extra.Dec.{Def,Instances} into scope.
 -- based on Agda.Syntax.Translation.ConcreteToAbstract.importPrimitives
@@ -69,6 +77,7 @@ importDec = do
 wrapDec :: Type -> C Type
 wrapDec t = do
   dec <- resolveStringName "Haskell.Extra.Dec.Def.Dec"
+  addInlineSymbols [dec]
   level <- liftTCM newLevelMeta
   let vArg = defaultArg
       hArg = setHiding Hidden . vArg

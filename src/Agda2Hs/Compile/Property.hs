@@ -23,7 +23,7 @@ import Agda2Hs.AgdaUtils (resolveStringName)
 import Agda2Hs.Compile.Types
 import Agda2Hs.Compile.Utils
 import qualified Agda2Hs.Language.Haskell as Hs
-import Agda.Syntax.Common.Pretty
+import Agda.Syntax.Common.Pretty hiding ((<+>))
 import Agda2Hs.Compile.Type (compileType, compileDomType, DomOutput (DOTerm), compileDom)
 import Agda2Hs.Language.Haskell.Utils ( hsName )
 import Agda2Hs.Language.Haskell ( pp, hsError )
@@ -75,12 +75,12 @@ compileBody :: Hs.Name () -> Telescope -> Type -> C (Hs.Decl ())
 compileBody name tel decTy = do
     hsPats <- compilePat tel
     hsExp <- addContext tel $ liftTCM (findDecInstance decTy) >>= \case
-            Nothing -> agda2hsError "No Dec instance found for"
+            Nothing -> agda2hsErrorM $ "No Dec instance found for" <+> prettyTCM decTy
             Just decInst -> compileTerm decTy decInst
 
     return $ Hs.FunBind () [Hs.Match () name hsPats (Hs.UnGuardedRhs () hsExp) Nothing]
 
--- Imports Haskell.Extra.Dec.{Def,Instances} into scope
+-- Imports Haskell.Extra.Dec.{Def} into scope
 importDec :: C ()
 importDec = do
     let haskellExtra = AN.Qual (AC.simpleName "Haskell") . AN.Qual (AC.simpleName "Extra") . AN.Qual (AC.simpleName "Dec")
@@ -90,7 +90,6 @@ importDec = do
                    Left _    -> __IMPOSSIBLE__
                    Right ds' -> liftTCM $ toAbstract ds'
     run $ AC.QName $ AC.simpleName "Def"
-    run $ AC.QName $ AC.simpleName "Instances"
 
     -- Programmatic imports bypass pragma processing by agda2hs, so dec, which is marked as inline, must be registered manually.
     decName <- resolveStringName decPath

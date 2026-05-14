@@ -24,14 +24,13 @@ import Agda2Hs.Compile.Types
 import Agda2Hs.Compile.Utils
 import qualified Agda2Hs.Language.Haskell as Hs
 import Agda.Syntax.Common.Pretty
-import Agda2Hs.Compile.Type (compileType)
+import Agda2Hs.Compile.Type (compileType, compileDomType, DomOutput (DOTerm), compileDom)
 import Agda2Hs.Language.Haskell.Utils ( hsName )
 import Agda2Hs.Language.Haskell ( pp, hsError )
 import Agda.TypeChecking.InstanceArguments
 import Agda.TypeChecking.Reduce
 import Control.Monad.Error.Class
 import Agda2Hs.Compile.Term
-import Language.Haskell.Exts (Rhs(..))
 
 decPath :: String
 decPath = "Haskell.Extra.Dec.Def.Dec"
@@ -61,16 +60,25 @@ compileTypeSig name tel decTy = do
     return $ Hs.TypeSig () [name] ty
 
 compilePat :: Telescope -> C [Hs.Pat ()]
-compilePat = undefined
+compilePat EmptyTel = return []
+compilePat (ExtendTel a tel) = do
+    pat <- compileDom a >>= \case
+        DOTerm -> do
+            let name = hsName $ absName tel
+            checkValidVarName name
+            return [Hs.PVar () name]
+        _ -> return []
+    
+    (pat ++) <$> underAbstraction a tel compilePat
 
 compileBody :: Hs.Name () -> Telescope -> Type -> C (Hs.Decl ())
 compileBody name tel decTy = do
     hsPats <- compilePat tel
-    hsRhs <- liftTCM (findDecInstances decTy) >>= \case
-        Nothing -> agda2hsError "No Dec instance found for"
-        Just decInst -> compileTerm decTy decInst
+    hsExp <- addContext tel $ liftTCM (findDecInstance decTy) >>= \case
+            Nothing -> agda2hsError "No Dec instance found for"
+            Just decInst -> compileTerm decTy decInst
 
-    return $ Hs.FunBind () [Hs.Match () name hsPats (UnGuardedRhs () hsRhs) Nothing]
+    return $ Hs.FunBind () [Hs.Match () name hsPats (Hs.UnGuardedRhs () hsExp) Nothing]
 
 -- Imports Haskell.Extra.Dec.{Def,Instances} into scope
 importDec :: C ()
@@ -98,8 +106,8 @@ wrapDec t = do
   return $ t {unEl = Def dec $ map Apply [hArg $ Level level, vArg $ unEl t]}
 
 -- TODO make this nicer?
-findDecInstances :: Type -> TCMT IO (Maybe Term)
-findDecInstances t =
+findDecInstance :: Type -> TCMT IO (Maybe Term)
+findDecInstance t =
   do
     (m, v) <- newInstanceMeta "" t
     findInstance m Nothing

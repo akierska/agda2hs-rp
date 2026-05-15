@@ -2,7 +2,7 @@
 
 open import Haskell.Prelude
 open import Haskell.Control.Exception
-open import Haskell.Extra.Dec.Def
+open import Haskell.Extra.Dec
 open import Haskell.Extra.Refinement
 open import Haskell.Law.Ord
 

@@ -2,7 +2,7 @@ module Haskell.Control.Exception where
 
 open import Haskell.Prim
 
-open import Haskell.Extra.Dec.Def
+open import Haskell.Extra.Dec
 open import Haskell.Extra.Refinement
 
 assert : (@0 b : Type ℓ) → {{Dec b}} → (@0 {{b}} → a) → a

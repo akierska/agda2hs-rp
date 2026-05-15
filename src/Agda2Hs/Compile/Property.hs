@@ -41,6 +41,7 @@ compileProp def@Defn{..} = do
     let (tel, concl) = splitTelescope defType
 
     importDec
+    importQuickCheck
     decTy <- wrapDec concl
     sig <- compileTypeSig name tel decTy
     body <- compileBody name tel decTy
@@ -95,6 +96,17 @@ importDec = do
     decName <- resolveStringName decPath
     addInlineSymbols [decName]
 
+importQuickCheck :: C ()
+importQuickCheck = do
+  reportSLn "agda2hs.compile" 1 "importQuickCheck: adding Test.QuickCheck import"
+  tellImport $ Import
+    { _importModule    = Hs.ModuleName () "Test.QuickCheck"
+    , _importQualified = Unqualified
+    , _importParent    = Nothing
+    , _importName      = Hs.Ident () "Property"
+    , _importNamespace = Hs.NoNamespace ()
+    }
+
 -- Wraps a proposition type P into Dec P.
 wrapDec :: Type -> C Type
 wrapDec t = do
@@ -110,5 +122,5 @@ findDecInstance t =
   do
     (m, v) <- newInstanceMeta "" t
     findInstance m Nothing
-    Just <$> instantiate v
+    Just <$> instantiateFull v
     `catchError` return (return Nothing)

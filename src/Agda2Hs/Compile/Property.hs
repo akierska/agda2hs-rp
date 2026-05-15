@@ -36,7 +36,8 @@ compileProp :: Definition -> C [Hs.Decl ()]
 compileProp def@Defn{..} = do
     let name = propName $ qnameName defName
     let (tel, concl) = splitTelescope defType
-
+    
+    checkValidFunName name 
     importDec
     importQuickCheck
     decTy <- wrapDec concl
@@ -46,7 +47,7 @@ compileProp def@Defn{..} = do
     return [sig, body]
 
 propName :: Name -> Hs.Name ()
-propName name = hsName $ "prop_" ++ prettyShow name
+propName name = hsName $ "prop_" ++ prettyShow name 
 
 -- Splits a type into its parameter bindings and conclusion.
 splitTelescope :: Type -> (Telescope, Type)
@@ -57,6 +58,7 @@ compileTypeSig name tel decTy = do
     ty <- compileType $ unEl $ telePi tel decTy
     return $ Hs.TypeSig () [name] ty
 
+-- Compiles telescope bindings into Haskell function patterns.
 compilePat :: Telescope -> C [Hs.Pat ()]
 compilePat EmptyTel = return []
 compilePat (ExtendTel a tel) = do
@@ -69,6 +71,7 @@ compilePat (ExtendTel a tel) = do
     
     (pat ++) <$> underAbstraction a tel compilePat
 
+-- Compiles the RHS of property test, by finding a Dec instance for the conclusion and translating it to Haskell.
 compileBody :: Hs.Name () -> Telescope -> Type -> C (Hs.Decl ())
 compileBody name tel decTy = do
     hsPats <- compilePat tel
@@ -78,7 +81,7 @@ compileBody name tel decTy = do
 
     return $ Hs.FunBind () [Hs.Match () name hsPats (Hs.UnGuardedRhs () hsExp) Nothing]
 
--- Imports Haskell.Extra.Dec.{Def} into scope
+-- Imports Haskell.Extra.Dec.{Def} into Agda2hs scope (not output Haskell module), necessary for wrapDec to work.
 importDec :: C ()
 importDec = do
     let haskellExtra = AN.Qual (AC.simpleName "Haskell") . AN.Qual (AC.simpleName "Extra") . AN.Qual (AC.simpleName "Dec")
@@ -89,10 +92,11 @@ importDec = do
                    Right ds' -> liftTCM $ toAbstract ds'
     run $ AC.QName $ AC.simpleName "Def"
 
-    -- Programmatic imports bypass pragma processing by agda2hs, so dec, which is marked as inline, must be registered manually.
+    -- Programmatic imports bypass pragma processing by agda2hs, so dec, which is marked as inline, must be registered as inline manually.
     decName <- resolveStringName decPath
     addInlineSymbols [decName]
 
+-- Adds QuickCheck import to the output Haskell module
 importQuickCheck :: C ()
 importQuickCheck = do
   tellImport $ Import
@@ -112,7 +116,6 @@ wrapDec t = do
       hArg = setHiding Hidden . vArg
   return $ t {unEl = Def dec $ map Apply [hArg $ Level level, vArg $ unEl t]}
 
--- TODO make this nicer?
 findDecInstance :: Type -> TCMT IO (Maybe Term)
 findDecInstance t =
   do

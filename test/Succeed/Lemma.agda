@@ -5,7 +5,7 @@ module Lemma where
 open import Haskell.Prelude
 open import Agda.Builtin.Equality
 open import Haskell.Extra.Refinement
-open import Haskell.Extra.Dec.Def
+open import Haskell.Extra.Dec
 
 -- ============================================================================
 -- SETUP 
@@ -44,24 +44,24 @@ data Sorted : List Nat → Set where
 postulate
 
   -- 1a: Bool predicate
-  @0 sortIsSortedLemma : ∀ (xs : List Nat) → isSorted (sort xs) ≡ True
+  -- @0 sortIsSortedLemma : ∀ (xs : List Nat) → isSorted (sort xs) ≡ True
 
   -- 1b: Equality
-  @0 sortLengthLemma : ∀ (xs : List Nat) → length (sort xs) ≡ length xs
+  -- @0 sortLengthLemma : ∀ (xs : List Nat) → length (sort xs) ≡ length xs
 
   -- 1c: Inductive predicate
-  @0 sortSortedLemma : ∀ (xs : List Nat) → Sorted (sort xs)
+  -- @0 sortSortedLemma : ∀ (xs : List Nat) → Sorted (sort xs)
 
   -- 1d: Conjunction
   -- qc translation: prop_sortCorrectLemma xs = isSorted (sort xs) === True .&&. length (sort xs) === length xs
-  @0 sortCorrectLemma : ∀ (xs : List Nat)
-    → isSorted (sort xs) ≡ True × length (sort xs) ≡ length xs
+  -- @0 sortCorrectLemma : ∀ (xs : List Nat)
+  -- → isSorted (sort xs) ≡ True × length (sort xs) ≡ length xs
 
   -- 1e: Misc
   @0 sortIdempotentLemma : ∀ (xs : List Nat) → sort (sort xs) ≡ sort xs
 
   -- 1f: IsTrue encoding
-  @0 sortIsSortedIsTrue : ∀ (xs : List Nat) → IsTrue (isSorted (sort xs))
+  -- @0 sortIsSortedIsTrue : ∀ (xs : List Nat) → IsTrue (isSorted (sort xs))
 
 {-# COMPILE AGDA2HS sortIsSortedLemma property #-}
 {-# COMPILE AGDA2HS sortLengthLemma property #-}

@@ -6,7 +6,7 @@ open import Haskell.Prim.Double
 
 open import Haskell.Prim.Eq
 
-open import Haskell.Extra.Dec
+open import Haskell.Extra.Dec.Def
 open import Haskell.Extra.Refinement
 
 open import Haskell.Law.Bool

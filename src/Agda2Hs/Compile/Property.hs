@@ -39,7 +39,6 @@ compileProp def@Defn{..} = do
     
     checkValidFunName name 
     importDec
-    importQuickCheck
     decTy <- wrapDec concl
     sig <- compileTypeSig name tel decTy
     body <- compileBody name tel decTy
@@ -95,17 +94,6 @@ importDec = do
     -- Programmatic imports bypass pragma processing by agda2hs, so dec, which is marked as inline, must be registered as inline manually.
     decName <- resolveStringName decPath
     addInlineSymbols [decName]
-
--- Adds QuickCheck import to the output Haskell module
-importQuickCheck :: C ()
-importQuickCheck = do
-  tellImport $ Import
-    { _importModule    = Hs.ModuleName () "Test.QuickCheck"
-    , _importQualified = Unqualified
-    , _importParent    = Nothing
-    , _importName      = Hs.Ident () "Property"
-    , _importNamespace = Hs.NoNamespace ()
-    }
 
 -- Wraps a proposition type P into Dec P.
 wrapDec :: Type -> C Type

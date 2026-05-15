@@ -1,36 +1,33 @@
 module Agda2Hs.Compile.Property where
 
+import Control.Monad.Error.Class
 import Data.Map (empty)
 
-import Agda.Compiler.Backend (Definition, TCM)
-import Agda.Interaction.BasicOps
+import Agda.Compiler.Backend (Definition)
 import Agda.Syntax.Common
+import Agda.Syntax.Common.Pretty ( prettyShow )
+import qualified Agda.Syntax.Concrete as AC
 import Agda.Syntax.Concrete.Definitions (NiceEnv (NiceEnv), niceDeclarations, runNice)
+import qualified Agda.Syntax.Concrete.Name as AN
 import Agda.Syntax.Internal
 import Agda.Syntax.Position (noRange)
 import Agda.Syntax.Scope.Base
-import Agda.Syntax.Scope.Monad
 import Agda.Syntax.Translation.ConcreteToAbstract (ToAbstract (toAbstract))
+import Agda.TypeChecking.InstanceArguments
 import Agda.TypeChecking.MetaVars
 import Agda.TypeChecking.Monad
 import Agda.TypeChecking.Pretty
+import Agda.TypeChecking.Reduce
 import Agda.TypeChecking.Substitute
 import Agda.Utils.Impossible (__IMPOSSIBLE__)
-import qualified Agda.Syntax.Concrete as AC
-import qualified Agda.Syntax.Concrete.Name as AN
 
-import Agda2Hs.AgdaUtils (resolveStringName)
+import Agda2Hs.AgdaUtils
+import Agda2Hs.Compile.Term
+import Agda2Hs.Compile.Type (compileType, DomOutput (DOTerm), compileDom)
 import Agda2Hs.Compile.Types
 import Agda2Hs.Compile.Utils
 import qualified Agda2Hs.Language.Haskell as Hs
-import Agda.Syntax.Common.Pretty hiding ((<+>))
-import Agda2Hs.Compile.Type (compileType, compileDomType, DomOutput (DOTerm), compileDom)
 import Agda2Hs.Language.Haskell.Utils ( hsName )
-import Agda2Hs.Language.Haskell ( pp, hsError )
-import Agda.TypeChecking.InstanceArguments
-import Agda.TypeChecking.Reduce
-import Control.Monad.Error.Class
-import Agda2Hs.Compile.Term
 
 decPath :: String
 decPath = "Haskell.Extra.Dec.Def.Dec"
@@ -98,7 +95,6 @@ importDec = do
 
 importQuickCheck :: C ()
 importQuickCheck = do
-  reportSLn "agda2hs.compile" 1 "importQuickCheck: adding Test.QuickCheck import"
   tellImport $ Import
     { _importModule    = Hs.ModuleName () "Test.QuickCheck"
     , _importQualified = Unqualified

@@ -4,7 +4,7 @@ open import Haskell.Prelude
 open import Haskell.Prim
 open import Haskell.Extra.Dec.Def
 open import Haskell.Extra.Refinement
-open import Haskell.Law
+open import Haskell.Law                public
 
 instance
   iDecIsTrue : {b : Bool} → Dec (IsTrue b)

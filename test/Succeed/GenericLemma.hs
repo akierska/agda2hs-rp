@@ -19,11 +19,6 @@ myZip [] _ = []
 myZip _ [] = []
 myZip (x : xs) (y : ys) = (x, y) : myZip xs ys
 
-myUnzip :: [(a, b)] -> ([a], [b])
-myUnzip [] = ([], [])
-myUnzip ((a, b) : ps)
-  = (a : fst (myUnzip ps), b : snd (myUnzip ps))
-
 prop_sortIsSortedIsTrue :: Ord a => [a] -> Bool
 prop_sortIsSortedIsTrue xs = isSorted (sort xs)
 

@@ -35,13 +35,6 @@ myZip (x ∷ xs) (y ∷ ys) = (x , y) ∷ myZip xs ys
 
 {-# COMPILE AGDA2HS myZip #-}
 
-myUnzip : List (a × b) → List a × List b
-myUnzip []             = ([] , [])
-myUnzip ((a , b) ∷ ps) = let (as , bs) = myUnzip ps
-                          in  (a ∷ as , b ∷ bs)
-
-{-# COMPILE AGDA2HS myUnzip #-}
-
 -- ============================================================================
 -- LEMMAS
 -- ============================================================================

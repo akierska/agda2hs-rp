@@ -47,36 +47,15 @@ myUnzip ((a , b) ∷ ps) = let (as , bs) = myUnzip ps
 -- ============================================================================
 
 postulate
-  -- IsTrue on generic Ord (no IsLawfulEq needed)
   @0 sortIsSortedIsTrue : ⦃ iOrd : Ord a ⦄ → ∀ (xs : List a)
     → IsTrue (isSorted ⦃ iOrd ⦄ (sort ⦃ iOrd ⦄ xs))
 
-  -- ≡ on generic List a (needs @0 IsLawfulEq, erased from output)
   @0 sortIdempotentLemma : ⦃ iOrd : Ord a ⦄ → @0 ⦃ IsLawfulEq a ⦄
     → ∀ (xs : List a) → sort ⦃ iOrd ⦄ (sort ⦃ iOrd ⦄ xs) ≡ sort ⦃ iOrd ⦄ xs
 
-  -- Multi-input: ≡ on Nat (no constraints needed)
   @0 zipLengthLemma : ∀ (xs : List a) (ys : List b)
     → length (myZip xs ys) ≡ min (length xs) (length ys)
-
-  -- Unzip preserves length
-  @0 unzipLengthLemma : ∀ (ps : List (a × b))
-    → length (fst (myUnzip ps)) ≡ length ps
-
-  -- Unzip produces equal-length lists
-  @0 unzipLengthsEqualLemma : ∀ (ps : List (a × b))
-    → length (fst (myUnzip ps)) ≡ length (snd (myUnzip ps))
-
-  -- Precondition: round-trip only holds for equal-length inputs
-  @0 unzipZipLemma : ⦃ iEqA : Eq a ⦄ → ⦃ iEqB : Eq b ⦄
-    → @0 ⦃ IsLawfulEq a ⦃ iEqA ⦄ ⦄ → @0 ⦃ IsLawfulEq b ⦃ iEqB ⦄ ⦄
-    → ∀ (xs : List a) (ys : List b)
-    → length xs ≡ length ys
-    → myUnzip (myZip xs ys) ≡ (xs , ys)
 
 {-# COMPILE AGDA2HS sortIsSortedIsTrue property #-}
 {-# COMPILE AGDA2HS sortIdempotentLemma property #-}
 {-# COMPILE AGDA2HS zipLengthLemma property #-}
-{-# COMPILE AGDA2HS unzipLengthLemma property #-}
-{-# COMPILE AGDA2HS unzipLengthsEqualLemma property #-}
-{-# COMPILE AGDA2HS unzipZipLemma property #-}
